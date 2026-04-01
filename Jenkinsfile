@@ -37,13 +37,11 @@ pipeline {
             steps {
                 script {
 
-                    //  MÉTODO ROBUSTO (sin basura)
                     def activeRaw = sh(
                         script: "grep -E 'server (blue|green):3000;' nginx.conf | grep -v '#' | sed -E 's/server (blue|green):3000;/\\1/'",
                         returnStdout: true
                     ).trim()
 
-                    //  SANITIZACIÓN EXTRA
                     def active = activeRaw.replaceAll("[^a-zA-Z]", "")
 
                     if (active != "blue" && active != "green") {
@@ -69,7 +67,8 @@ pipeline {
                     export APP_VERSION=${VERSION}
                     export HEALTH_MODE=${params.HEALTH_MODE}
 
-                    docker compose up -d --build ${env.TARGET}
+                    # 🔥 Levanta nginx + target
+                    docker compose up -d --build nginx ${env.TARGET}
                     """
 
                     sleep 5
@@ -102,10 +101,15 @@ pipeline {
                     echo "Switching traffic from ${env.ACTIVE} to ${env.TARGET}"
 
                     sh """
+                    # 🔥 Asegura que nginx esté corriendo
+                    docker compose ps nginx | grep Up || docker compose up -d nginx
+
+                    # 🔁 Switch Blue/Green
                     sed -i 's|server ${env.ACTIVE}:3000;|# server ${env.ACTIVE}:3000;|' nginx.conf
                     sed -i 's|# server ${env.TARGET}:3000;|server ${env.TARGET}:3000;|' nginx.conf
 
-                    docker compose exec nginx nginx -s reload
+                    # 🔄 Reload seguro
+                    docker compose restart nginx
                     """
                 }
             }
