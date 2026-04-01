@@ -8,12 +8,6 @@ pipeline {
 
     stages {
 
-        stage('Clone') {
-            steps {
-                git 'https://github.com/lesantivanez/lab09releasemanagement.git'
-            }
-        }
-
         stage('Generate Version') {
             steps {
                 script {
@@ -45,6 +39,9 @@ pipeline {
         stage('Tag Release') {
             steps {
                 sh """
+                git config user.email "jenkins@local"
+                git config user.name "jenkins"
+
                 git tag v${VERSION}
                 git push origin v${VERSION}
                 """
