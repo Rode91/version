@@ -17,6 +17,7 @@ services:
     build: .
     environment:
       - APP_VERSION=${APP_VERSION}
+      - HEALTH_MODE=${HEALTH_MODE}   # vamos a simular casos exitosos y fallidos con esta variable de entorno
     networks:
       - app_net
 
@@ -24,6 +25,7 @@ services:
     build: .
     environment:
       - APP_VERSION=${APP_VERSION}
+      - HEALTH_MODE=${HEALTH_MODE}   # vamos a simular casos exitosos y fallidos con esta variable de entorno
     networks:
       - app_net
 

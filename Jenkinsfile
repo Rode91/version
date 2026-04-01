@@ -1,6 +1,14 @@
 pipeline {
     agent any
 
+    parameters {
+        choice(
+            name: 'HEALTH_MODE',
+            choices: ['success', 'fail'],
+            description: 'Simular estado del health check'
+        )
+    }
+
     environment {
         VERSION = ""
     }
@@ -38,27 +46,40 @@ pipeline {
 
                     echo "Active: ${active}"
                     echo "Deploying to: ${target}"
+                    echo "Health mode: ${params.HEALTH_MODE}"
 
                     sh """
                     export APP_VERSION=${VERSION}
+                    export HEALTH_MODE=${params.HEALTH_MODE}
 
                     docker compose up -d --build ${target}
-
-                    sleep 5
                     """
+
+                    // pequeño tiempo inicial
+                    sleep 5
                 }
             }
         }
 
-        stage('Health Check') {
+        stage('Health Check PRO') {
             steps {
                 script {
-                    def status = sh(
-                        script: "curl -s http://localhost:3000",
-                        returnStatus: true
-                    )
 
-                    if (status != 0) {
+                    def active = sh(
+                        script: "grep server nginx.conf | grep -v '#' | awk '{print \$2}' | cut -d: -f1",
+                        returnStdout: true
+                    ).trim()
+
+                    def target = (active == "blue") ? "green" : "blue"
+
+                    echo "Running health check on ${target}"
+
+                    try {
+                        retry(5) {
+                            sleep 3
+                            sh "docker compose exec ${target} curl -f localhost:3000/health"
+                        }
+                    } catch (Exception e) {
                         error("Health check failed - aborting release")
                     }
                 }
@@ -75,6 +96,8 @@ pipeline {
                     ).trim()
 
                     def target = (active == "blue") ? "green" : "blue"
+
+                    echo "Switching traffic from ${active} to ${target}"
 
                     sh """
                     sed -i 's/server ${active}:3000;/# server ${active}:3000;/' nginx.conf
