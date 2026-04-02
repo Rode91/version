@@ -10,5 +10,3 @@ COPY app/ .
 EXPOSE 3000
 
 CMD ["node", "app.js"]
-
-COPY nginx/nginx.conf /etc/nginx/nginx.conf

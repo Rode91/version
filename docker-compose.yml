@@ -32,7 +32,9 @@ services:
       - app_net
 
   nginx:
-    build: .
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
     ports:
       - "3000:80"
     depends_on:
