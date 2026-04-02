@@ -123,16 +123,19 @@ pipeline {
 
         stage('Tag Release') {
             steps {
-                sh """
-                git config user.email "jenkins@local"
-                git config user.name "jenkins"
+                withCredentials([string(credentialsId: 'github-token', variable: 'TOKEN')]) {
+                    sh """
+                    git config user.email "jenkins@local"
+                    git config user.name "jenkins"
 
-                git tag v${VERSION}
-                git push origin v${VERSION}
-                """
+                    git remote -v
+
+                    git tag v${VERSION}
+                    git push https://$TOKEN@github.com/Rode91/version.git v${VERSION}
+                    """
+                }
             }
         }
-    }
 
     post {
         failure {
