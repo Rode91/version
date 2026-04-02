@@ -137,6 +137,8 @@ pipeline {
             }
         }
 
+    } // ✅ cierre correcto de stages
+
     post {
         failure {
             echo "❌ Deployment failed. No traffic switch applied."
