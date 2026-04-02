@@ -32,7 +32,7 @@ services:
       - app_net
 
   nginx:
-    image: nginx:latest
+    build: .
     ports:
       - "3000:80"
     depends_on:
